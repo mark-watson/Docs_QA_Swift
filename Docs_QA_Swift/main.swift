@@ -84,4 +84,34 @@ print(dotProductResult1)
 let dotProductResult2 = dotProduct(emb1, emb3)
 print(dotProductResult2)
 
+var embeddingsStore: Array<[Float]> = Array()
+var chunks: Array<String> = Array()
+
+func addEmbedding(_ embedding: [Float]) {
+    embeddingsStore.append(embedding)
+}
+
+func addChunk(_ chunk: String) {
+    chunks.append(chunk)
+}
+
+let fileManager = FileManager.default
+let currentDirectoryURL = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+let dataDirectoryURL = currentDirectoryURL.appendingPathComponent("data")
+
+do {
+    let directoryContents = try fileManager.contentsOfDirectory(at: dataDirectoryURL, includingPropertiesForKeys: nil)
+    let txtFiles = directoryContents.filter { $0.pathExtension == "txt" }
+    for txtFile in txtFiles {
+        let content = try String(contentsOf: txtFile)
+        print(content)
+    }
+} catch {
+
+}
+       
+//let fileUrl = FilePath("./data")
+//let documentURL = FileManager.default.urls(for: fileUrl, in: .userDomainMask).first!
+//let fileURL = documentURL.appendingPathComponent("sports.txt")
+//print("fileURL:", fileURL)
 
