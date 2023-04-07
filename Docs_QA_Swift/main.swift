@@ -7,6 +7,52 @@
 
 import Foundation
 
+//print("env:", ProcessInfo.processInfo.environment)
+let openai_key = ProcessInfo.processInfo.environment["OPENAI_KEY"]!
+
+let openAiHost = "https://api.openai.com/v1/embeddings"
+
+func openAiHelper(body: String)  -> String {
+    var ret = ""
+    var content = "{}"
+    let requestUrl = URL(string: openAiHost)!
+    var request = URLRequest(url: requestUrl)
+    request.httpMethod = "POST"
+    request.httpBody = body.data(using: String.Encoding.utf8);
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.setValue("Bearer " + openai_key, forHTTPHeaderField: "Authorization")
+    let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+        if let error = error {
+            print("-->> Error accessing OpenAI servers: \(error)")
+            return
+        }
+        if let data = data, let s = String(data: data, encoding: .utf8) {
+            content = s
+            //print("** s=", s)
+            CFRunLoopStop(CFRunLoopGetMain())
+        }
+    }
+    task.resume()
+    CFRunLoopRun()
+    let c = String(content)
+    let i1 = c.range(of: "\"embedding\":")
+    if let r1 = i1 {
+        let i2 = c.range(of: "]")
+        if let r2 = i2 {
+            ret = String(String(String(c[r1.lowerBound..<r2.lowerBound]).dropFirst(15)).dropLast(2))
+        }
+    }
+    return ret
+}
+
+public func embeddings(someText: String) -> [Float] {
+    let body: String = "{\"input\": \"" + someText + "\", \"model\": \"text-embedding-ada-002\" }"
+    return readList(openAiHelper(body: body))
+}
+
+let emb1 = embeddings(someText: "John bought a new car")
+print("** emb1 = ", emb1)
+
 func dotProduct(_ list1: [Float], _ list2: [Float]) -> Float {
     guard list1.count == list2.count else {
         fatalError("Lists must have the same length.")
@@ -22,17 +68,19 @@ func dotProduct(_ list1: [Float], _ list2: [Float]) -> Float {
 }
 
 func readList(_ input: String) -> [Float] {
-    return input.split(separator: " ").compactMap { Float($0) }
+    print("* input:", input)
+    return input.split(separator: ",\n").compactMap { Float($0.trimmingCharacters(in: .whitespaces)) }
 }
 
-let input1 = "1.0 2.0 3.0"
-let input2 = "4.0 5.0 6.0"
 
-let list1 = readList(input1)
-let list2 = readList(input2)
+print(readList(
+"""
+1.0,
+2.0,
+3.0
+"""))
+//let dotProductResult = dotProduct(list1, list2)
 
-let dotProductResult = dotProduct(list1, list2)
-
-print(dotProductResult)
+//print(dotProductResult)
 
 
