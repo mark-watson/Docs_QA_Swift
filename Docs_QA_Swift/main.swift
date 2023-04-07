@@ -50,9 +50,6 @@ public func embeddings(someText: String) -> [Float] {
     return readList(openAiHelper(body: body))
 }
 
-let emb1 = embeddings(someText: "John bought a new car")
-print("** emb1 = ", emb1)
-
 func dotProduct(_ list1: [Float], _ list2: [Float]) -> Float {
     guard list1.count == list2.count else {
         fatalError("Lists must have the same length.")
@@ -68,19 +65,23 @@ func dotProduct(_ list1: [Float], _ list2: [Float]) -> Float {
 }
 
 func readList(_ input: String) -> [Float] {
-    print("* input:", input)
+    //print("* input:", input)
     return input.split(separator: ",\n").compactMap { Float($0.trimmingCharacters(in: .whitespaces)) }
 }
 
+let emb1 = embeddings(someText: "John bought a new car")
+//print("** emb1 = ", emb1)
 
-print(readList(
-"""
-1.0,
-2.0,
-3.0
-"""))
-//let dotProductResult = dotProduct(list1, list2)
+let emb2 = embeddings(someText: "Sally drove to the store")
+//print("** emb2 = ", emb2)
 
-//print(dotProductResult)
+let emb3 = embeddings(someText: "The dog saw a cat")
+//print("** emb3 = ", emb3)
+
+let dotProductResult1 = dotProduct(emb1, emb2)
+print(dotProductResult1)
+
+let dotProductResult2 = dotProduct(emb1, emb3)
+print(dotProductResult2)
 
 
