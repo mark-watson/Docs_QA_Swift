@@ -8,6 +8,26 @@
 import Foundation
 import NaturalLanguage
 
+// String utilities:
+
+extension String {
+    func removeCharacters(from forbiddenChars: CharacterSet) -> String {
+        let passed = self.unicodeScalars.filter { !forbiddenChars.contains($0) }
+        return String(String.UnicodeScalarView(passed))
+    }
+
+    func removeCharacters(from: String) -> String {
+        return removeCharacters(from: CharacterSet(charactersIn: from))
+    }
+    func plainText() -> String {
+        return self.removeCharacters(from: "\"`()%$#@[]{}<>").replacingOccurrences(of: "\n", with: " ")
+    }
+}
+
+print("The [1]. What? \nOK, that makes sense for 4 things or 5.5 things".plainText())
+
+
+
 //print("env:", ProcessInfo.processInfo.environment)
 let openai_key = ProcessInfo.processInfo.environment["OPENAI_KEY"]!
 
@@ -52,8 +72,10 @@ public func embeddings(someText: String) -> [Float] {
 }
 
 func dotProduct(_ list1: [Float], _ list2: [Float]) -> Float {
-    guard list1.count == list2.count else {
-        fatalError("Lists must have the same length.")
+    if list1.count != list2.count {
+        //fatalError("Lists must have the same length.")
+        print("WARNING: Lists must have the same length: \(list1.count) != \(list2.count)")
+        return 0.0
     }
     
     var result: Float = 0
@@ -90,6 +112,7 @@ var chunks: Array<String> = Array()
 
 func addEmbedding(_ embedding: [Float]) {
     embeddingsStore.append(embedding)
+    //print("Added embedding: count=\(embeddingsStore.count)  \(embedding)")
 }
 
 func addChunk(_ chunk: String) {
@@ -106,8 +129,15 @@ do {
     for txtFile in txtFiles {
         let content = try String(contentsOf: txtFile)
         //print(content)
-        let chnks = segmentTextIntoChunks(text: content, max_chunk_size: 100)
-        print("\n\nchunks:\n", chnks)
+        let chnks = segmentTextIntoChunks(text: content.plainText(), max_chunk_size: 100)
+        //print("\n\nchunks:\n", chnks)
+        for chunk in chnks {
+            let embedding = embeddings(someText: chunk)
+            if embedding.count > 0 {
+                addEmbedding(embedding)
+                addChunk(chunk)
+            }
+        }
     }
 } catch {
 
@@ -148,4 +178,81 @@ func segmentTextIntoChunks(text: String, max_chunk_size: Int) -> [String] {
     }
     return chunks
 }
+
+//  For OpenAI QA API:
+
+let openAiQaHost = "https://api.openai.com/v1/engines/davinci/completions"
+
+func openAiQaHelper(body: String)  -> String {
+    var ret = ""
+    var content = "{}"
+    let requestUrl = URL(string: openAiQaHost)!
+    var request = URLRequest(url: requestUrl)
+    request.httpMethod = "POST"
+    request.httpBody = body.data(using: String.Encoding.utf8);
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.setValue("Bearer " + openai_key, forHTTPHeaderField: "Authorization")
+    let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+        if let error = error {
+            print("-->> Error accessing OpenAI servers: \(error)")
+            return
+        }
+        if let data = data, let s = String(data: data, encoding: .utf8) {
+            content = s
+            CFRunLoopStop(CFRunLoopGetMain())
+        }
+    }
+    task.resume()
+    CFRunLoopRun()
+    let c = String(content)
+    print("DEBUG response c:", c)
+    let i1 = c.range(of: "\"text\":")
+    if let r1 = i1 {
+        let i2 = c.range(of: "\"index\":")
+        if let r2 = i2 {
+            ret = String(String(String(c[r1.lowerBound..<r2.lowerBound]).dropFirst(9)).dropLast(2))
+        }
+    }
+    return ret
+}
+
+func questionAnswering(question: String) -> String {
+    //let body: String = "{\"prompt\": \"nQ: " + question + " nA:\", \"max_tokens\": 25, \"presence_penalty\": 0.0, \"temperature\": 0.3, \"top_p\": 1.0, \"frequency_penalty\": 0.0 , \"stop\": [\"\\n\"]}"
+    let body: String = "{\"prompt\": \"" + question + "\", \"max_tokens\": 100}"
+    print("DEBUG body:", body)
+    
+    let answer = openAiQaHelper(body: body)
+    if let i1 = answer.range(of: "nQ:") {
+        return String(answer[answer.startIndex..<i1.lowerBound])
+        //return String(answer.prefix(i1.lowerBound))
+    }
+    return answer
+}
+
+//  Top level query interface:
+
+func query(_ query: String) -> String {
+    let queryEmbedding = embeddings(someText: query)
+    var contextText = ""
+    for i in 0..<embeddingsStore.count {
+        let dotProductResult = dotProduct(queryEmbedding, embeddingsStore[i])
+        if dotProductResult > 0.8 {
+            contextText.append(chunks[i])
+            contextText.append(" ")
+        }
+    }
+    print("\n\n+++++++ contextText = \(contextText)\n\n")
+    let augmentedQuery = contextText + "   Question: " + query
+    print("\n\n+++++++ augmentedQuery = \(augmentedQuery)\n\n")
+    let answer = questionAnswering(question: augmentedQuery)
+    print("* * query: ", query)
+    print("* * answer:", answer)
+    return answer
+
+}
+
+print(query("What is the history of chemistry?"))
+print(query("What is the definition of sports?"))
+print(query("What is the microeconomics?"))
+
 
