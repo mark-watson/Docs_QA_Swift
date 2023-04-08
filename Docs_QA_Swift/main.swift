@@ -105,7 +105,9 @@ do {
     let txtFiles = directoryContents.filter { $0.pathExtension == "txt" }
     for txtFile in txtFiles {
         let content = try String(contentsOf: txtFile)
-        print(content)
+        //print(content)
+        let chnks = segmentTextIntoChunks(text: content, max_chunk_size: 100)
+        print("\n\nchunks:\n", chnks)
     }
 } catch {
 
@@ -128,3 +130,22 @@ func segmentTextIntoSentences(text: String) -> [String] {
 let text = "Hello there! How are you doing today? It's a nice day outside."
 let sentences = segmentTextIntoSentences(text: text)
 print(sentences)
+
+func segmentTextIntoChunks(text: String, max_chunk_size: Int) -> [String] {
+    let sentences = segmentTextIntoSentences(text: text)
+    var chunks: Array<String> = Array()
+    var currentChunk = ""
+    var currentChunkSize = 0
+    for sentence in sentences {
+        if currentChunkSize + sentence.count < max_chunk_size {
+            currentChunk += sentence
+            currentChunkSize += sentence.count
+        } else {
+            chunks.append(currentChunk)
+            currentChunk = sentence
+            currentChunkSize = sentence.count
+        }
+    }
+    return chunks
+}
+
