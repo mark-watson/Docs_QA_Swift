@@ -181,7 +181,7 @@ func segmentTextIntoChunks(text: String, max_chunk_size: Int) -> [String] {
 
 //  For OpenAI QA API:
 
-let openAiQaHost = "https://api.openai.com/v1/engines/davinci/completions"
+let openAiQaHost = "https://api.openai.com/v1/chat/completions"
 
 func openAiQaHelper(body: String)  -> String {
     var ret = ""
@@ -216,13 +216,16 @@ func openAiQaHelper(body: String)  -> String {
     return ret
 }
 
-func questionAnswering(question: String) -> String {
+func questionAnswering(context: String, question: String) -> String {
     //let body: String = "{\"prompt\": \"nQ: " + question + " nA:\", \"max_tokens\": 25, \"presence_penalty\": 0.0, \"temperature\": 0.3, \"top_p\": 1.0, \"frequency_penalty\": 0.0 , \"stop\": [\"\\n\"]}"
-    let body: String = "{\"prompt\": \"" + question + "\", \"max_tokens\": 100}"
+    //let body: String = "{\"prompt\": \"" + question + "\", \"max_tokens\": 100}"
+    let body = "{ \"model\": \"gpt-3.5-turbo\", \"messages\": [ {\"role\": \"system\", \"content\": \"" + context + "\"}, {\"role\": \"user\", \"content\": \"" + question + "\"}]}"
+
     print("DEBUG body:", body)
     
     let answer = openAiQaHelper(body: body)
-    if let i1 = answer.range(of: "nQ:") {
+    if let i1 = answer.range(of: "\"content\":") {
+        print("--- i1:", i1)
         return String(answer[answer.startIndex..<i1.lowerBound])
         //return String(answer.prefix(i1.lowerBound))
     }
@@ -242,17 +245,15 @@ func query(_ query: String) -> String {
         }
     }
     print("\n\n+++++++ contextText = \(contextText)\n\n")
-    let augmentedQuery = contextText + "   Question: " + query
-    print("\n\n+++++++ augmentedQuery = \(augmentedQuery)\n\n")
-    let answer = questionAnswering(question: augmentedQuery)
+    let answer = questionAnswering(context: contextText, question: query)
     print("* * query: ", query)
     print("* * answer:", answer)
     return answer
 
 }
 
-print(query("What is the history of chemistry?"))
+//print(query("What is the history of chemistry?"))
 print(query("What is the definition of sports?"))
-print(query("What is the microeconomics?"))
+//print(query("What is the microeconomics?"))
 
 
