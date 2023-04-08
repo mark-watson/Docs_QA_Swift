@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import NaturalLanguage
 
 //print("env:", ProcessInfo.processInfo.environment)
 let openai_key = ProcessInfo.processInfo.environment["OPENAI_KEY"]!
@@ -115,3 +116,15 @@ do {
 //let fileURL = documentURL.appendingPathComponent("sports.txt")
 //print("fileURL:", fileURL)
 
+func segmentTextIntoSentences(text: String) -> [String] {
+    let tokenizer = NLTokenizer(unit: .sentence)
+    tokenizer.string = text
+    let sentences = tokenizer.tokens(for: text.startIndex..<text.endIndex).map { token -> String in
+        return String(text[token.lowerBound..<token.upperBound])
+    }
+    return sentences
+}
+
+let text = "Hello there! How are you doing today? It's a nice day outside."
+let sentences = segmentTextIntoSentences(text: text)
+print(sentences)
