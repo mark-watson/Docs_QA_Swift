@@ -196,7 +196,7 @@ func openAiQaHelper(body: String)  -> String {
     task.resume()
     CFRunLoopRun()
     let c = String(content)
-    print("DEBUG response c:", c)
+    //print("DEBUG response c:", c)
     let i1 = c.range(of: "\"content\":")
     if let r1 = i1 {
         let i2 = c.range(of: "\"}")
