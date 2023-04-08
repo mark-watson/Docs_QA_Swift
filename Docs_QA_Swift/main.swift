@@ -24,10 +24,6 @@ extension String {
     }
 }
 
-print("The [1]. What? \nOK, that makes sense for 4 things or 5.5 things".plainText())
-
-
-
 //print("env:", ProcessInfo.processInfo.environment)
 let openai_key = ProcessInfo.processInfo.environment["OPENAI_KEY"]!
 
@@ -143,11 +139,6 @@ do {
 
 }
        
-//let fileUrl = FilePath("./data")
-//let documentURL = FileManager.default.urls(for: fileUrl, in: .userDomainMask).first!
-//let fileURL = documentURL.appendingPathComponent("sports.txt")
-//print("fileURL:", fileURL)
-
 func segmentTextIntoSentences(text: String) -> [String] {
     let tokenizer = NLTokenizer(unit: .sentence)
     tokenizer.string = text
@@ -159,7 +150,7 @@ func segmentTextIntoSentences(text: String) -> [String] {
 
 let text = "Hello there! How are you doing today? It's a nice day outside."
 let sentences = segmentTextIntoSentences(text: text)
-print(sentences)
+//print(sentences)
 
 func segmentTextIntoChunks(text: String, max_chunk_size: Int) -> [String] {
     let sentences = segmentTextIntoSentences(text: text)
@@ -206,26 +197,24 @@ func openAiQaHelper(body: String)  -> String {
     CFRunLoopRun()
     let c = String(content)
     print("DEBUG response c:", c)
-    let i1 = c.range(of: "\"text\":")
+    let i1 = c.range(of: "\"content\":")
     if let r1 = i1 {
-        let i2 = c.range(of: "\"index\":")
+        let i2 = c.range(of: "\"}")
         if let r2 = i2 {
-            ret = String(String(String(c[r1.lowerBound..<r2.lowerBound]).dropFirst(9)).dropLast(2))
+            ret = String(String(String(c[r1.lowerBound..<r2.lowerBound]).dropFirst(11)))
         }
     }
     return ret
 }
 
 func questionAnswering(context: String, question: String) -> String {
-    //let body: String = "{\"prompt\": \"nQ: " + question + " nA:\", \"max_tokens\": 25, \"presence_penalty\": 0.0, \"temperature\": 0.3, \"top_p\": 1.0, \"frequency_penalty\": 0.0 , \"stop\": [\"\\n\"]}"
-    //let body: String = "{\"prompt\": \"" + question + "\", \"max_tokens\": 100}"
-    let body = "{ \"model\": \"gpt-3.5-turbo\", \"messages\": [ {\"role\": \"system\", \"content\": \"" + context + "\"}, {\"role\": \"user\", \"content\": \"" + question + "\"}]}"
+    let body = "{ \"model\": \"gpt-3.5-turbo\", \"messages\": [ {\"role\": \"system\", \"content\": \"" +
+      context + "\"}, {\"role\": \"user\", \"content\": \"" + question + "\"}]}"
 
-    print("DEBUG body:", body)
+    //print("DEBUG body:", body)
     
     let answer = openAiQaHelper(body: body)
     if let i1 = answer.range(of: "\"content\":") {
-        print("--- i1:", i1)
         return String(answer[answer.startIndex..<i1.lowerBound])
         //return String(answer.prefix(i1.lowerBound))
     }
@@ -244,7 +233,7 @@ func query(_ query: String) -> String {
             contextText.append(" ")
         }
     }
-    print("\n\n+++++++ contextText = \(contextText)\n\n")
+    //print("\n\n+++++++ contextText = \(contextText)\n\n")
     let answer = questionAnswering(context: contextText, question: query)
     print("* * query: ", query)
     print("* * answer:", answer)
@@ -252,8 +241,8 @@ func query(_ query: String) -> String {
 
 }
 
-//print(query("What is the history of chemistry?"))
-print(query("What is the definition of sports?"))
-//print(query("What is the microeconomics?"))
+query("What is the history of chemistry?")
+query("What is the definition of sports?")
+query("What is the microeconomics?")
 
 
