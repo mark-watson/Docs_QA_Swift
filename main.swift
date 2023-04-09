@@ -29,7 +29,7 @@ extension String {
 // The vector embedding model is used to generate a vector embedding.
 // The chatgpt-3.5turbo model is used to generate a response to a prompt.
 // The vector embedding model is used to compare the similarity of two
-// prompts. The chatgpt-3.5turbo model is used to generate a response to
+// prompts.
 
 let openai_key = ProcessInfo.processInfo.environment["OPENAI_KEY"]!
 
@@ -255,6 +255,6 @@ func query(_ query: String) -> String {
 
 }
 
-query("What is the history of chemistry?")
-query("What is the definition of sports?")
-query("What is the microeconomics?")
+print(query("What is the history of chemistry?"))
+print(query("What is the definition of sports?"))
+print(query("What is the microeconomics?"))
