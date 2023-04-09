@@ -24,7 +24,13 @@ extension String {
     }
 }
 
-//print("env:", ProcessInfo.processInfo.environment)
+// We use two models in this example: a vector embedding model
+// and a chatgpt-3.5turbo conversation model (see bottom of this file).
+// The vector embedding model is used to generate a vector embedding.
+// The chatgpt-3.5turbo model is used to generate a response to a prompt.
+// The vector embedding model is used to compare the similarity of two
+// prompts. The chatgpt-3.5turbo model is used to generate a response to
+
 let openai_key = ProcessInfo.processInfo.environment["OPENAI_KEY"]!
 
 let openAiHost = "https://api.openai.com/v1/embeddings"
@@ -88,6 +94,9 @@ func readList(_ input: String) -> [Float] {
     return input.split(separator: ",\n").compactMap { Float($0.trimmingCharacters(in: .whitespaces)) }
 }
 
+// Here is some throw-away code just to show how embedding
+// and dot product work to find semantic similarity:
+
 let emb1 = embeddings(someText: "John bought a new car")
 //print("** emb1 = ", emb1)
 
@@ -102,6 +111,14 @@ print(dotProductResult1)
 
 let dotProductResult2 = dotProduct(emb1, emb3)
 print(dotProductResult2)
+
+// End of throw-away code.
+
+// For this example, we use an in-memory store of embedding vectors and chunk text.
+// A text document is broken into smaller chuncks of text. Each chunk is embedded
+// and stored in the embeddingsStore. The chunk text is stored in the chunks array.
+// The embeddingsStore and chunks array are used to find the most similar chunk
+// to a prompt. The most similar chunk is used to generate a response to the prompt.
 
 var embeddingsStore: Array<[Float]> = Array()
 var chunks: Array<String> = Array()
@@ -118,6 +135,8 @@ func addChunk(_ chunk: String) {
 let fileManager = FileManager.default
 let currentDirectoryURL = URL(fileURLWithPath: fileManager.currentDirectoryPath)
 let dataDirectoryURL = currentDirectoryURL.appendingPathComponent("data")
+
+// Top level code expression to process all *.txt files in the data/ directory:
 
 do {
     let directoryContents = try fileManager.contentsOfDirectory(at: dataDirectoryURL, includingPropertiesForKeys: nil)
@@ -136,7 +155,6 @@ do {
         }
     }
 } catch {
-
 }
        
 func segmentTextIntoSentences(text: String) -> [String] {
@@ -147,10 +165,6 @@ func segmentTextIntoSentences(text: String) -> [String] {
     }
     return sentences
 }
-
-let text = "Hello there! How are you doing today? It's a nice day outside."
-let sentences = segmentTextIntoSentences(text: text)
-//print(sentences)
 
 func segmentTextIntoChunks(text: String, max_chunk_size: Int) -> [String] {
     let sentences = segmentTextIntoSentences(text: text)
@@ -170,7 +184,7 @@ func segmentTextIntoChunks(text: String, max_chunk_size: Int) -> [String] {
     return chunks
 }
 
-//  For OpenAI QA API:
+//  For OpenAI QA API using gpt-3.5turbo model:
 
 let openAiQaHost = "https://api.openai.com/v1/chat/completions"
 
@@ -215,8 +229,8 @@ func questionAnswering(context: String, question: String) -> String {
     
     let answer = openAiQaHelper(body: body)
     if let i1 = answer.range(of: "\"content\":") {
+        // variable answer is a string containing JSON. We want to extract the value of the "content" key and we do so without using a JSON parser.
         return String(answer[answer.startIndex..<i1.lowerBound])
-        //return String(answer.prefix(i1.lowerBound))
     }
     return answer
 }
@@ -235,8 +249,8 @@ func query(_ query: String) -> String {
     }
     //print("\n\n+++++++ contextText = \(contextText)\n\n")
     let answer = questionAnswering(context: contextText, question: query)
-    print("* * query: ", query)
-    print("* * answer:", answer)
+    //print("* * debug: query: ", query)
+    //print("* * debug: answer:", answer)
     return answer
 
 }
@@ -244,5 +258,3 @@ func query(_ query: String) -> String {
 query("What is the history of chemistry?")
 query("What is the definition of sports?")
 query("What is the microeconomics?")
-
-
