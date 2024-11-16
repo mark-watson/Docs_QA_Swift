@@ -141,11 +141,11 @@ let dataDirectoryURL = currentDirectoryURL.appendingPathComponent("data")
 do {
     let directoryContents = try fileManager.contentsOfDirectory(at: dataDirectoryURL, includingPropertiesForKeys: nil)
     let txtFiles = directoryContents.filter { $0.pathExtension == "txt" }
+    
     for txtFile in txtFiles {
-        let content = try String(contentsOf: txtFile)
-        //print(content)
+        let content = try String(contentsOf: txtFile, encoding: .utf8)
         let chnks = segmentTextIntoChunks(text: content.plainText(), max_chunk_size: 100)
-        //print("\n\nchunks:\n", chnks)
+        
         for chunk in chnks {
             let embedding = embeddings(someText: chunk)
             if embedding.count > 0 {
@@ -155,6 +155,7 @@ do {
         }
     }
 } catch {
+    print("Error: \(error)")
 }
        
 func segmentTextIntoSentences(text: String) -> [String] {
