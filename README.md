@@ -1,3 +1,12 @@
+# Content for this repository has moved to:
+
+[https://github.com/mark-watson/SwiftAI-book](https://github.com/mark-watson/SwiftAI-book)
+
+This new repository contains both the manuscript and source code examples for my Swift AI book. This book can be read for free online at:
+
+[https://leanpub.com/read/SwiftAI](https://leanpub.com/read/SwiftAI)
+
+
 # Using GPT-3.5turbo with Local Document Embeddings to Search Your Data
 
 This is a new example for a second edition of my Swift AI book which you can read for free online: [https://leanpub.com/SwiftAI/read](https://leanpub.com/SwiftAI/read), or you can purcahse a copy to support my writing.
